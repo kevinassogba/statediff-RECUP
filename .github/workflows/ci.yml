@@ -40,7 +40,7 @@ jobs:
       - name: Install Statediff dependencies
         run: |
           source $HOME/spack/share/spack/setup-env.sh
-          spack install --only dependencies statediff@v0.1
+          spack install --only dependencies statediff@0.1
 
       - name: Install Statediff package
         run: |
