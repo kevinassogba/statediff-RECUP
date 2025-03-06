@@ -1,0 +1,4 @@
+[submodule "state-diff"]
+	path = state-diff
+	url = https://github.com/DataStates/state-diff.git
+	branch = rev-cereal
