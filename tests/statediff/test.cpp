@@ -1,6 +1,5 @@
 #include <iostream>
-#include <cassert>
-// #include "statediff.h" 
+#include <cassert> 
 
 void test_functionality() {
     std::cout << "Running basic test...\n";
