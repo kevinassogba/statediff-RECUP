@@ -1,0 +1,75 @@
+name: Build and Install Statediff with Spack
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout state-diff repository
+        uses: actions/checkout@v4
+
+      - name: Install Spack
+        run: |
+          git clone --depth=1 https://github.com/spack/spack.git $HOME/spack
+          echo "SPACK_ROOT=$HOME/spack" >> $GITHUB_ENV
+          echo "$HOME/spack/bin" >> $GITHUB_PATH
+          source $HOME/spack/share/spack/setup-env.sh
+          spack --version
+
+      - name: Cache Spack build directory
+        uses: actions/cache@v3
+        with:
+          path: ~/.spack
+          key: ${{ runner.os }}-spack-${{ hashFiles('**/spack-repo') }}
+          restore-keys: |
+            ${{ runner.os }}-spack-
+
+      - name: Add Spack repository
+        run: |
+          source $HOME/spack/share/spack/setup-env.sh
+          spack repo add ./spack-repo
+
+      - name: Install Statediff dependencies
+        run: |
+          source $HOME/spack/share/spack/setup-env.sh
+          spack install --only dependencies statediff
+
+      - name: Install Statediff package
+        run: |
+          source $HOME/spack/share/spack/setup-env.sh
+          spack install statediff -j$(nproc)
+
+      - name: Verify Statediff installation
+        run: |
+          source $HOME/spack/share/spack/setup-env.sh
+          spack find statediff
+
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout state-diff repository
+        uses: actions/checkout@v4
+
+      - name: Set up Spack
+        run: |
+          git clone --depth=1 https://github.com/spack/spack.git $HOME/spack
+          echo "SPACK_ROOT=$HOME/spack" >> $GITHUB_ENV
+          echo "$HOME/spack/bin" >> $GITHUB_PATH
+          source $HOME/spack/share/spack/setup-env.sh
+
+      - name: Load Spack environment
+        run: |
+          source $HOME/spack/share/spack/setup-env.sh
+          spack env activate ./builds/test-env
+
+      - name: Run tests
+        run: ./test.sh

@@ -1,0 +1,79 @@
+name: Build and Install Statediff with Spack
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout state-diff repository
+        uses: actions/checkout@v2
+
+      - name: Install Spack
+        run: |
+          git clone https://github.com/spack/spack.git
+          export SPACK_ROOT=$(pwd)/spack
+          . $SPACK_ROOT/share/spack/setup-env.sh
+
+      - name: Cache Spack install directory
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.spack
+            $(spack location -i statediff)
+          key: ${{ runner.os }}-spack-${{ hashFiles('**/spack-repo') }}
+          restore-keys: |
+            ${{ runner.os }}-spack-
+      
+      - name: Add Spack repository
+        run: |
+          spack repo add ./spack-repo
+
+      - name: Install statediff with Spack (parallel)
+        run: |
+          spack install statediff -j 4
+
+      - name: Run tests with 'make test'
+        run: |
+          cd $(spack location -i statediff)/build
+          make test
+          
+  tests-spack:
+    name: Tests with SPACK package manager
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        tool: [ 'radical-tools' ]
+    env:
+      ENV_NAME: recup-env
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 2
+    - uses: spack/setup-spack@v2
+      with:
+        ref: develop      # Spack version (examples: develop, releases/v0.23)
+        buildcache: true  # Configure oci://ghcr.io/spack/github-actions-buildcache
+        path: spack       # Where to clone Spack
+    - name: ${{ matrix.python-version }} - create environment
+      shell: spack-bash {0}
+      run: |
+        spack env create ${{ env.ENV_NAME }}
+        spack env activate ${{ env.ENV_NAME }}
+        spack config add concretizer:unify:when_possible
+        spack config add concretizer:reuse:false
+        spack config add config:db_lock_timeout:300
+        spack -e ./builds/${{ matrix.python-version }} concretize
+        spack -e ./builds/${{ matrix.python-version }} install
+    - name: ${{ matrix.python-version }} - run tests
+      shell: spack-bash {0}
+      run: |
+        spack env activate ${{ env.ENV_NAME }}
+        spack env status

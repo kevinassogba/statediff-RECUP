@@ -5,7 +5,7 @@ class Statediff(CMakePackage):
     homepage = "https://github.com/kevinassogba/statediff-RECUP"
     git      = "https://github.com/kevinassogba/statediff-RECUP.git"
 
-    version('v0.1', branch='main') 
+    version('v0.1', branch='main', submodules=True) 
 
     variant(
         "build_type",
@@ -14,23 +14,22 @@ class Statediff(CMakePackage):
         values=("Debug", "Release", "RelWithDebInfo"),
     )
 
-    build_directory = "state-diff/build"
+    build_directory = "build"
 
     # Specify the dependencies
     depends_on('kokkos+openmp')
+    # depends_on('liburing')
+    # depends_on('cereal')
     depends_on('cmake', type="build")
+
+    root_cmakelists_dir = "state-diff"
 
     def cmake_args(self):
         args = [
             self.define('CMAKE_BUILD_TYPE', self.spec.variants['build_type'].value),
             self.define('CMAKE_CXX_COMPILER', self.spec["kokkos"].kokkos_cxx),
             self.define('CMAKE_CXX_FLAGS', '-fPIC'),
-            self.define('CMAKE_INSTALL_PREFIX', self.prefix+'state-diff/build'),
+            self.define('CMAKE_INSTALL_PREFIX', self.prefix+'/build'),
             self.define('Kokkos_DIR', self.spec['kokkos'].prefix.lib64.cmake.Kokkos)
         ]
         return args
-
-    def install(self, spec, prefix):
-        with working_dir(self.build_directory):
-            make()
-            make('install')
