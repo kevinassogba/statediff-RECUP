@@ -66,10 +66,5 @@ jobs:
           echo "$HOME/spack/bin" >> $GITHUB_PATH
           source $HOME/spack/share/spack/setup-env.sh
 
-      - name: Load Spack environment
-        run: |
-          source $HOME/spack/share/spack/setup-env.sh
-          spack env activate ./builds/test-env
-
       - name: Run tests
         run: ./test.sh

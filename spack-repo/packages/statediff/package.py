@@ -16,10 +16,7 @@ class Statediff(CMakePackage):
 
     build_directory = "build"
 
-    # Specify the dependencies
     depends_on('kokkos+openmp')
-    # depends_on('liburing')
-    # depends_on('cereal')
     depends_on('cmake', type="build")
 
     root_cmakelists_dir = "state-diff"
