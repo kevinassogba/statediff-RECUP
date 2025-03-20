@@ -25,16 +25,16 @@ jobs:
           buildcache: true
           path: spack
 
+      - name: Add and Refresh Spack Repository
+        run: |
+          spack repo add ./spack-repo
+          spack repo refresh
+
       - name: Debug Spack Packages (Check If Statediff Exists)
         run: |
           spack repo list
           spack list | grep statediff || echo "statediff package not found!"
           ls -R ./spack-repo/packages/statediff || echo "package.py not found!"
-
-      - name: Add and Refresh Spack Repository
-        run: |
-          spack repo add ./spack-repo
-          spack repo refresh
 
       - name: Debug Concretization Before Environment Setup
         run: |
