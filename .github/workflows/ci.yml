@@ -11,46 +11,42 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout state-diff repository
         uses: actions/checkout@v4
-
-      - name: Install Spack
-        run: |
-          git clone --depth=1 https://github.com/spack/spack.git $HOME/spack
-          echo "SPACK_ROOT=$HOME/spack" >> $GITHUB_ENV
-          echo "$HOME/spack/bin" >> $GITHUB_PATH
-          source $HOME/spack/share/spack/setup-env.sh
-          spack --version
-
-      - name: Cache Spack build directory
-        uses: actions/cache@v3
         with:
-          path: ~/.spack
-          key: ${{ runner.os }}-spack-${{ hashFiles('**/spack-repo') }}
-          restore-keys: |
-            ${{ runner.os }}-spack-
+          fetch-depth: 2
+          submodules: true  # Ensure submodules are fetched if needed
+
+      - name: Set up Spack
+        uses: spack/setup-spack@v2
+        with:
+          ref: develop  # Use latest Spack version
+          buildcache: true  # Enable caching of builds
+          path: spack  # Spack installation directory
 
       - name: Add Spack repository
-        run: |
-          source $HOME/spack/share/spack/setup-env.sh
-          spack repo add ./spack-repo
+        run: spack repo add ./spack-repo
 
-      - name: Install Statediff dependencies
+      - name: Create Spack Environment
+        shell: spack-bash {0}
         run: |
-          source $HOME/spack/share/spack/setup-env.sh
-          spack install --only dependencies statediff@0.1
+          spack env create statediff-env
+          spack env activate statediff-env
+          spack add statediff@v0.1
+          spack concretize
 
-      - name: Install Statediff package
+      - name: Install Statediff
+        shell: spack-bash {0}
         run: |
-          source $HOME/spack/share/spack/setup-env.sh
-          spack install statediff@v0.1 -j$(nproc)
+          spack env activate statediff-env
+          spack install
 
-      - name: Verify Statediff installation
+      - name: Verify Statediff Installation
+        shell: spack-bash {0}
         run: |
-          source $HOME/spack/share/spack/setup-env.sh
-          spack find statediff
+          spack env activate statediff-env
+          spack find
 
   test:
     needs: build
@@ -58,13 +54,21 @@ jobs:
     steps:
       - name: Checkout state-diff repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
       - name: Set up Spack
+        uses: spack/setup-spack@v2
+        with:
+          ref: develop
+          buildcache: true
+          path: spack
+
+      - name: Load Spack environment
+        shell: spack-bash {0}
         run: |
-          git clone --depth=1 https://github.com/spack/spack.git $HOME/spack
-          echo "SPACK_ROOT=$HOME/spack" >> $GITHUB_ENV
-          echo "$HOME/spack/bin" >> $GITHUB_PATH
-          source $HOME/spack/share/spack/setup-env.sh
+          spack env activate statediff-env
 
       - name: Run tests
+        shell: spack-bash {0}
         run: ./test.sh
