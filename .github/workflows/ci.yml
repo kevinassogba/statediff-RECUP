@@ -16,7 +16,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 2
-          submodules: true  # Ensure submodules are fetched if needed
+          submodules: true  # This ensure that the statediff submodule is fetched
 
       - name: Set up Spack
         uses: spack/setup-spack@v2
