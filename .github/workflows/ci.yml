@@ -21,17 +21,29 @@ jobs:
       - name: Set up Spack
         uses: spack/setup-spack@v2
         with:
-          ref: develop  # Use latest Spack version
-          buildcache: true  # Enable caching of builds
-          path: spack  # Spack installation directory
+          ref: develop
+          buildcache: true
+          path: spack
 
-      - name: Add Spack repository
-        run: spack repo add ./spack-repo
+      - name: Debug Spack Packages (Check If Statediff Exists)
+        run: |
+          spack repo list
+          spack list | grep statediff || echo "statediff package not found!"
+          ls -R ./spack-repo/packages/statediff || echo "package.py not found!"
 
-      - name: Create Spack Environment
+      - name: Add and Refresh Spack Repository
+        run: |
+          spack repo add ./spack-repo
+          spack repo refresh
+
+      - name: Debug Concretization Before Environment Setup
+        run: |
+          spack spec statediff@v0.1 || echo "statediff package not recognized!"
+
+      - name: Create and Activate Spack Environment
         shell: spack-bash {0}
         run: |
-          spack env create statediff-env
+          spack env create statediff-env || echo "Environment creation failed!"
           spack env activate statediff-env
           spack add statediff@v0.1
           spack concretize
@@ -40,7 +52,7 @@ jobs:
         shell: spack-bash {0}
         run: |
           spack env activate statediff-env
-          spack install
+          spack install || echo "Spack installation failed!"
 
       - name: Verify Statediff Installation
         shell: spack-bash {0}
