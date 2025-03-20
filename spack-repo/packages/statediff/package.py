@@ -5,7 +5,7 @@ class Statediff(CMakePackage):
     homepage = "https://github.com/kevinassogba/statediff-RECUP"
     git      = "https://github.com/kevinassogba/statediff-RECUP.git"
 
-    version('0.1', git='https://github.com/kevinassogba/statediff-RECUP.git', branch='main', submodules=True)
+    version('main', branch='main', submodules=True)
 
     variant(
         "build_type",

@@ -30,22 +30,22 @@ jobs:
           spack repo add ./spack-repo
           spack clean -m  # Clears Spack's module cache to ensure new packages are found
 
-      - name: Debug Spack Packages (Check If Statediff Exists)
+      - name: Debug Spack Package Path
+        run: |
+          ls -R ./spack-repo/packages/statediff || echo "package.py not found!"
+
+      - name: Debug Spack Package Detection
         run: |
           spack repo list
           spack list | grep statediff || echo "statediff package not found!"
-          ls -R ./spack-repo/packages/statediff || echo "package.py not found!"
-
-      - name: Debug Concretization Before Environment Setup
-        run: |
-          spack spec statediff@v0.1 || echo "statediff package not recognized!"
+          spack spec statediff@main || echo "statediff package not recognized!"
 
       - name: Create and Activate Spack Environment
         shell: spack-bash {0}
         run: |
           spack env create statediff-env || echo "Environment creation failed!"
           spack env activate statediff-env
-          spack add statediff@v0.1
+          spack add statediff@main  # ✅ Updated to match package.py
           spack concretize
 
       - name: Install Statediff
