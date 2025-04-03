@@ -92,4 +92,4 @@ jobs:
 
       - name: Run tests
         shell: spack-bash {0}
-        run: ./tests/statediff/test.sh
+        run: bash ./tests/statediff/test.sh
