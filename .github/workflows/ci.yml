@@ -76,10 +76,19 @@ jobs:
           buildcache: true
           path: spack
 
-      - name: Load Spack environment
+      - name: Ensure Spack environment exists
         shell: spack-bash {0}
         run: |
-          spack env activate statediff-env
+          if ! spack env list | grep -q "^statediff-env$"; then
+            echo "Spack environment 'statediff-env' not found. Creating it..."
+            spack env create statediff-env
+          else
+            echo "Spack environment 'statediff-env' already exists."
+          fi
+
+      - name: Load Spack environment
+        shell: spack-bash {0}
+        run: spack env activate statediff-env
 
       - name: Run tests
         shell: spack-bash {0}
