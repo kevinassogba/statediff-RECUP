@@ -1,4 +1,4 @@
-from spack.package import CMakePackage
+from spack.package import CMakePackage, version
 
 class Statediff(CMakePackage):
     """state-diff is a project that depends on Kokkos, liburing, and cereal."""
