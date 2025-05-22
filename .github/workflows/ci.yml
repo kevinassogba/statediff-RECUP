@@ -45,7 +45,7 @@ jobs:
         run: |
           spack env create statediff-env || echo "Environment creation failed!"
           spack env activate statediff-env
-          spack add statediff@main  # ✅ Updated to match package.py
+          spack add statediff@main  # Y\Updated to match package.py
           spack concretize
 
       - name: Install Statediff
@@ -68,6 +68,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 2
+          submodules: true
 
       - name: Set up Spack
         uses: spack/setup-spack@v2
@@ -85,6 +86,8 @@ jobs:
           else
             echo "Spack environment 'statediff-env' already exists."
           fi
+          spack add statediff@main
+          spack concretize
 
       - name: Load Spack environment
         shell: spack-bash {0}
