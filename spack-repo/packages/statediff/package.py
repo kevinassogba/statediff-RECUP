@@ -24,7 +24,7 @@ class Statediff(CMakePackage):
     def cmake_args(self):
         args = [
             self.define('CMAKE_BUILD_TYPE', self.spec.variants['build_type'].value),
-            self.define('CMAKE_CXX_COMPILER', self.spec["kokkos"].cxx),
+            self.define('CMAKE_CXX_COMPILER', self.compiler.cxx),
             self.define('CMAKE_CXX_FLAGS', '-fPIC'),
             self.define('CMAKE_INSTALL_PREFIX', self.prefix+'/build'),
             self.define('Kokkos_DIR', self.spec['kokkos'].prefix.lib64.cmake.Kokkos)
