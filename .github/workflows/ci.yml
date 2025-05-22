@@ -26,6 +26,7 @@ jobs:
           path: spack
 
       - name: Add and Debug Custom Spack Repo
+        shell: spack-bash {0}
         run: |
           echo "==> Remove any existing repo with namespace 'statediff'"
           spack repo rm statediff || true
@@ -66,6 +67,7 @@ jobs:
 
 
       - name: Debug Spack Package Detection
+        shell: spack-bash {0}
         run: |
           spack repo list
           spack list | grep statediff || echo "statediff package not found!"
@@ -76,7 +78,7 @@ jobs:
         run: |
           spack env create statediff-env || echo "Environment creation failed!"
           spack env activate statediff-env
-          spack add statediff.statediff@main  # Y\Updated to match package.py
+          spack add statediff@main  # Y\Updated to match package.py
           spack concretize
 
       - name: Install Statediff
