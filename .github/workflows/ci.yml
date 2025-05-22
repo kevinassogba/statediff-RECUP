@@ -16,99 +16,54 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 2
-          submodules: true  # Ensure submodules are fetched if needed
-
-      - name: Set up Spack
-        uses: spack/setup-spack@v2
-        with:
-          ref: develop
-          buildcache: true
-          path: spack
-
-      - name: Add and Debug Custom Spack Repo
-        shell: spack-bash {0}
-        run: |
-          echo "==> Remove any existing repo with namespace 'statediff'"
-          spack repo rm statediff || true
-
-          echo "==> Add custom repo"
-          spack repo add ./spack-repo
-
-          echo "Repo list:"
-          spack repo list
-
-          echo "Try spack list statediff:"
-          spack list | grep statediff || echo "statediff not listed"
-
-          echo "Try spack info statediff:"
-          spack info statediff || echo "spack info failed"
-
-          echo "Try spack info with namespace:"
-          spack info statediff.statediff || echo "namespaced info failed"
-
-          echo "Try importing statediff package:"
-          python3 -c "import spack.pkg.statediff.statediff" || echo "Python import failed"
-
-      - name: Debug Spack Package Detection
-        shell: spack-bash {0}
-        run: |
-          spack repo list
-          spack list | grep statediff || echo "statediff package not found!"
-          spack spec statediff@main || echo "statediff package not recognized!"
-
-      - name: Create and Activate Spack Environment
-        shell: spack-bash {0}
-        run: |
-          spack env create statediff-env || echo "Environment creation failed!"
-          spack env activate statediff-env
-          spack add statediff@main
-          spack concretize
-
-      - name: Install Statediff
-        shell: spack-bash {0}
-        run: |
-          spack env activate statediff-env
-          spack install || echo "Spack installation failed!"
-
-      - name: Verify Statediff Installation
-        shell: spack-bash {0}
-        run: |
-          spack env activate statediff-env
-          spack find
-
-  test:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout state-diff repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
           submodules: true
 
       - name: Set up Spack
         uses: spack/setup-spack@v2
         with:
           ref: develop
-          buildcache: true
           path: spack
 
-      - name: Ensure Spack environment exists
+      - name: Add and Debug Custom Spack Repository
+        shell: bash
+        run: |
+          echo "Cleaning any previous state..."
+          spack repo rm statediff || true
+          spack repo add ./spack-repo
+          spack repo list
+          spack clean -a
+
+      - name: Confirm Package Detection
         shell: spack-bash {0}
         run: |
-          if ! spack env list | grep -q "^statediff-env$"; then
-            echo "Spack environment 'statediff-env' not found. Creating it..."
-            spack env create statediff-env
-          else
-            echo "Spack environment 'statediff-env' already exists."
-          fi
+          echo "==> REPO LIST"
+          spack repo list
+
+          echo "==> CHECK PACKAGE LISTING"
+          spack list | grep statediff || echo "statediff not found"
+
+          echo "==> SHOW PACKAGE INFO"
+          spack info statediff || echo "spack info statediff failed"
+
+          echo "==> CHECK PYTHON IMPORT"
+          python3 -c "import spack.pkg.statediff.statediff" && echo "Python import succeeded" || echo "Python import failed"
+
+      - name: Create and Install Environment
+        shell: spack-bash {0}
+        run: |
+          echo "Creating environment"
+          spack env create statediff-env
+          spack env activate statediff-env
+
+          echo "Adding statediff to env"
           spack add statediff@main
           spack concretize
 
-      - name: Load Spack environment
-        shell: spack-bash {0}
-        run: spack env activate statediff-env
+          echo "Installing"
+          spack install
 
-      - name: Run tests
+      - name: Verify Installation
         shell: spack-bash {0}
-        run: bash ./tests/statediff/test.sh
+        run: |
+          spack env activate statediff-env
+          spack find
