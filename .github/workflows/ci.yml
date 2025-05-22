@@ -34,37 +34,20 @@ jobs:
           echo "==> Add custom repo"
           spack repo add ./spack-repo
 
-          echo "==> Show repo list"
+          echo "Repo list:"
           spack repo list
 
-          echo "==> Show spack debug report"
-          spack debug report
+          echo "Try spack list statediff:"
+          spack list | grep statediff || echo "statediff not listed"
 
-          echo "==> List contents of spack-repo"
-          tree ./spack-repo || echo "tree failed"
+          echo "Try spack info statediff:"
+          spack info statediff || echo "spack info failed"
 
-          echo "==> Show repo.yaml"
-          cat ./spack-repo/repo.yaml || echo "repo.yaml missing!"
+          echo "Try spack info with namespace:"
+          spack info statediff.statediff || echo "namespaced info failed"
 
-          echo "==> Show package.py"
-          cat ./spack-repo/packages/statediff/package.py || echo "package.py missing!"
-
-          echo "==> Clean Spack cache"
-          spack clean -a
-
-          echo "==> Try listing statediff"
-          spack list | grep statediff || echo "statediff not found in 'spack list'"
-
-          echo "==> Try info on 'statediff'"
-          spack info statediff || echo "spack info statediff failed"
-
-          echo "==> Try info on namespaced 'statediff.statediff'"
-          spack info statediff.statediff || echo "spack info statediff.statediff failed"
-
-          echo "==> Try manual Python import"
-          export PYTHONPATH=$SPACK_ROOT/lib/spack:$PYTHONPATH
-          python3 -c "import spack.pkg.statediff.statediff" || echo "Manual import failed"
-
+          echo "Try importing statediff package:"
+          python3 -c "import spack.pkg.statediff.statediff" || echo "Python import failed"
 
       - name: Debug Spack Package Detection
         shell: spack-bash {0}
@@ -78,7 +61,7 @@ jobs:
         run: |
           spack env create statediff-env || echo "Environment creation failed!"
           spack env activate statediff-env
-          spack add statediff@main  # Y\Updated to match package.py
+          spack add statediff@main
           spack concretize
 
       - name: Install Statediff
