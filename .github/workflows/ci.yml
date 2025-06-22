@@ -1,69 +1,54 @@
-name: Build and Install Statediff with Spack
+name: CI - C++ Build with Spack (Kokkos)
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
+
     steps:
-      - name: Checkout state-diff repository
+      - name: Checkout repository and submodules
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2
-          submodules: true
+          submodules: recursive
 
-      - name: Set up Spack
-        uses: spack/setup-spack@v2
-        with:
-          ref: develop
-          path: spack
-
-      - name: Add and Debug Custom Spack Repository
-        shell: bash
+      - name: Install required system packages
         run: |
-          echo "Cleaning any previous state..."
-          spack repo rm statediff || true
-          spack repo add ./spack-repo
-          spack repo list
-          spack clean -a
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake ninja-build git
 
-      - name: Confirm Package Detection
-        shell: spack-bash {0}
+      - name: Clone and bootstrap Spack
         run: |
-          echo "==> REPO LIST"
-          spack repo list
+          git clone https://github.com/spack/spack.git $HOME/spack
+          echo ". $HOME/spack/share/spack/setup-env.sh" >> $GITHUB_ENV
 
-          echo "==> CHECK PACKAGE LISTING"
-          spack list | grep statediff || echo "statediff not found"
-
-          echo "==> SHOW PACKAGE INFO"
-          spack info statediff || echo "spack info statediff failed"
-
-          echo "==> CHECK PYTHON IMPORT"
-          python3 -c "import spack.pkg.statediff.statediff" && echo "Python import succeeded" || echo "Python import failed"
-
-      - name: Create and Install Environment
-        shell: spack-bash {0}
+      - name: Install Kokkos with Spack
         run: |
-          echo "Creating environment"
-          spack env create statediff-env
-          spack env activate statediff-env
+          . $HOME/spack/share/spack/setup-env.sh
+          spack install kokkos +serial build_type=Release
+          spack find --paths kokkos
+          KOKKOS_DIR=$(spack location -i kokkos)
+          echo "KOKKOS_DIR=$KOKKOS_DIR" >> $GITHUB_ENV
 
-          echo "Adding statediff to env"
-          spack add statediff@main
-          spack concretize
-
-          echo "Installing"
-          spack install
-
-      - name: Verify Installation
-        shell: spack-bash {0}
+      - name: Configure state-diff with Spack-managed Kokkos
         run: |
-          spack env activate statediff-env
-          spack find
+          mkdir -p build && cd build
+          cmake \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_CXX_FLAGS="-fPIC" \
+            -DENABLE_TESTS=ON \
+            -DKokkos_DIR=$KOKKOS_DIR/lib64/cmake/Kokkos \
+            ../external/state-diff
+
+      - name: Build
+        run: |
+          cmake --build build --parallel
+
+      - name: Run tests
+        run: |
+          cd build
+          ctest --output-on-failure
