@@ -46,7 +46,8 @@ jobs:
           export LIBURING_PREFIX=$(spack location -i liburing)
 
           # Construct GitHub-authenticated URL
-          export LIBURING_REPO="https://${{ secrets.GITHUB_TOKEN }}@github.com/DataStates/liburing-loader.git"
+          # export LIBURING_REPO="https://${{ secrets.GITHUB_TOKEN }}@github.com/DataStates/liburing-loader.git"
+          export LIBURING_REPO="https://${{ secrets.GH_PAT_PRIV_REPOS }}@github.com/DataStates/liburing-loader.git"
 
           mkdir -p build && cd build
           cmake \
