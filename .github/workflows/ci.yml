@@ -2,9 +2,9 @@ name: CI - C++ Build with Spack (Kokkos)
 
 on:
   push:
-    branches: [main]
+    branches: [wspack]
   pull_request:
-    branches: [main]
+    branches: [wspack]
 
 jobs:
   build:
@@ -19,29 +19,41 @@ jobs:
       - name: Install required system packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential cmake ninja-build git
+          sudo apt-get install -y \
+            build-essential \
+            cmake \
+            ninja-build \
+            git \
+            pkg-config
 
       - name: Clone and bootstrap Spack
         run: |
           git clone https://github.com/spack/spack.git $HOME/spack
-          echo ". $HOME/spack/share/spack/setup-env.sh" >> $GITHUB_ENV
 
-      - name: Install Kokkos with Spack
+      - name: Install dependencies with Spack (kokkos + liburing + mpi)
         run: |
           . $HOME/spack/share/spack/setup-env.sh
+          spack install openmpi
+          # spack install kokkos@3.7.00 +serial
           spack install kokkos +serial build_type=Release
-          spack find --paths kokkos
-          KOKKOS_DIR=$(spack location -i kokkos)
-          echo "KOKKOS_DIR=$KOKKOS_DIR" >> $GITHUB_ENV
+          spack install liburing@2.6:
 
       - name: Configure state-diff with Spack-managed Kokkos
         run: |
+          . $HOME/spack/share/spack/setup-env.sh
+          export MPI_PREFIX=$(spack location -i openmpi)
+          export KOKKOS_PREFIX=$(spack location -i kokkos)
+          export LIBURING_PREFIX=$(spack location -i liburing)
+
+          # Construct GitHub-authenticated URL
+          export LIBURING_REPO="https://${{ secrets.GITHUB_TOKEN }}@github.com/DataStates/liburing-loader.git"
+
           mkdir -p build && cd build
           cmake \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_CXX_FLAGS="-fPIC" \
-            -DENABLE_TESTS=ON \
-            -DKokkos_DIR=$KOKKOS_DIR/lib64/cmake/Kokkos \
+            -DCMAKE_PREFIX_PATH="$MPI_PREFIX;$KOKKOS_PREFIX;$LIBURING_PREFIX" \
+            -DLIBURING_LOADER_REPO=$LIBURING_REPO \
             ../external/state-diff
 
       - name: Build
