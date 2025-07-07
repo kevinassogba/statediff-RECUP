@@ -2,9 +2,9 @@ name: CI - C++ Build with Spack (Kokkos)
 
 on:
   push:
-    branches: [wo-liburing]
+    branches: [wspack]
   pull_request:
-    branches: [wo-liburing]
+    branches: [wspack]
 
 jobs:
   build:
@@ -51,11 +51,16 @@ jobs:
           export KOKKOS_PREFIX=$(spack location -i kokkos)
           export LIBURING_PREFIX=$(spack location -i liburing)
 
+          # Construct GitHub-authenticated URL
+          # export LIBURING_REPO="https://${{ secrets.GITHUB_TOKEN }}@github.com/DataStates/liburing-loader.git"
+          export LIBURING_REPO="https://${{ secrets.GH_PAT_PRIV_REPOS }}@github.com/DataStates/liburing-loader.git"
+
           mkdir -p build && cd build
           cmake \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_CXX_FLAGS="-fPIC" \
             -DCMAKE_PREFIX_PATH="$MPI_PREFIX;$KOKKOS_PREFIX;$LIBURING_PREFIX" \
+            -DLIBURING_LOADER_REPO=$LIBURING_REPO \
             ../external/state-diff
 
       - name: Build
