@@ -4,7 +4,6 @@ set -e
 echo "Activating Spack environment..."
 . $HOME/spack/share/spack/setup-env.sh
 
-# Get the directory of this script
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TEST_CPP="$SCRIPT_DIR/test.cpp"
 

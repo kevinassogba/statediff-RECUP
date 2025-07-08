@@ -2,3 +2,5 @@
 external/spack/
 build/
 Testing/
+*.egg-info/
+venv/
