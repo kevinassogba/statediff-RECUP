@@ -1,18 +1,23 @@
 #!/bin/bash
-
 set -e
 
 echo "Activating Spack environment..."
-source $(spack location -i statediff-env)/share/spack/setup-env.sh
+. $HOME/spack/share/spack/setup-env.sh
 
-echo "Compiling test program..."
-g++ -o test_statediff test.cpp -I$(spack location -i statediff-env)/include \
-    -L$(spack location -i statediff-env)/lib -lstatediff
+# Get the directory of this script
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TEST_CPP="$SCRIPT_DIR/test.cpp"
 
-echo "Adding statediff to the library path..."
-export LD_LIBRARY_PATH=$(spack location -i statediff-env)/lib:$LD_LIBRARY_PATH
+echo "Compiling test program from $TEST_CPP..."
+g++ -o "$SCRIPT_DIR/test_statediff" "$TEST_CPP" \
+    -I$GITHUB_WORKSPACE/external/state-diff/include \
+    -L$GITHUB_WORKSPACE/build \
+    -lstatediff
+
+echo "Setting LD_LIBRARY_PATH..."
+export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/build:$LD_LIBRARY_PATH
 
 echo "Running tests..."
-./test_statediff
+"$SCRIPT_DIR/test_statediff"
 
 echo "All tests passed!"

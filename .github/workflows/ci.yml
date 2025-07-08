@@ -62,7 +62,7 @@ jobs:
         run: |
           cmake --build build --parallel
 
-      - name: Run tests
+      - name: Run CTest tests
         run: |
           cd build
-          ctest --output-on-failure
+          ctest --output-on-failure --verbose | tee result.log
